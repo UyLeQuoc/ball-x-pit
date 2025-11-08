@@ -189,8 +189,8 @@ export class Renderer {
     this.ctx.restore();
     
     // Draw shield/paddle above player
-    const paddleWidth = PLAYER_WIDTH + 20;
-    const paddleHeight = 8;
+    const paddleWidth = PLAYER_WIDTH + 50; // Increased from +20 to +50
+    const paddleHeight = 10; // Increased from 8 to 10
     const paddleY = pos.y - PLAYER_HEIGHT / 2 - 15;
     
     // Paddle glow

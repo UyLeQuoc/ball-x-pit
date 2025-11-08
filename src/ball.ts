@@ -82,10 +82,10 @@ export function updateBalls(
     if (ball.velocity.y > 0) {
       // Shield/paddle is slightly above player center
       const paddleRect = {
-        x: playerPos.x - PLAYER_WIDTH / 2 - 10, // Wider than player
+        x: playerPos.x - PLAYER_WIDTH / 2 - 25, // Wider than player (increased from -10 to -25)
         y: playerPos.y - PLAYER_HEIGHT / 2 - 15, // Above player
-        width: PLAYER_WIDTH + 20,
-        height: 8 // Thin paddle
+        width: PLAYER_WIDTH + 50, // Increased from +20 to +50
+        height: 10 // Increased from 8 to 10
       };
       
       if (circleRectCollision(ball.position, BALL_RADIUS, paddleRect)) {
