@@ -108,15 +108,15 @@ export const BALL_STATS = {
     icon: '🔵'
   },
   lightning: {
-    damage: 20,
+    damage: 15,
     speed: 1.2,
     color: COLORS.lightning,
     icon: '⚡',
-    chainCount: 3,
-    chainRange: 100
+    chainCount: 2,
+    chainRange: 60 // Reduced from 100 to 60 for less spread
   },
   ghost: {
-    damage: 35,
+    damage: 25,
     speed: 1.4,
     color: COLORS.ghost,
     icon: '👻',

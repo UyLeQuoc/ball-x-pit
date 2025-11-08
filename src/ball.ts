@@ -98,18 +98,18 @@ export function updateBalls(
       }
     }
     
-    // Ball reaches bottom - return to inventory (marked for collection)
-    if (ball.position.y + BALL_RADIUS >= GAME_HEIGHT - 80) {
-      // Mark ball as returning to inventory
-      ball.velocity = { x: 0, y: 0 };
-      ball.active = false; // Will be collected by game logic
-      return true; // Keep in array temporarily for collection
-    }
-    
-    // Only remove if way out of bounds
-    if (ball.position.y > GAME_HEIGHT + 100) {
-      return false;
-    }
+      // Ball reaches bottom
+      if (ball.position.y + BALL_RADIUS >= GAME_HEIGHT - 80) {
+        if (ball.type === 'normal') {
+          // Normal balls are NOT lost - return to inventory
+          ball.velocity = { x: 0, y: 0 };
+          ball.active = false; // Mark for collection
+          return true; // Keep in array for collection
+        } else {
+          // Other ball types (lightning, ghost, bomb) are LOST
+          return false; // Remove from game
+        }
+      }
     
     return true;
   });

@@ -78,14 +78,14 @@ function createAllUpgrades(): UpgradeOption[] {
       }
     },
     {
-      id: 'add_ball',
-      name: '+1 Normal Ball',
-      description: 'Add 1 Normal Ball to inventory',
+      id: 'add_3_balls',
+      name: '+3 Normal Balls',
+      description: 'Add 3 Normal Balls to inventory',
       icon: '🔵',
       rarity: 'common',
       category: 'combat',
       apply: (game: any) => {
-        game.player.inventory.normal += 1;
+        game.player.inventory.normal += 3;
       }
     },
     {
@@ -122,33 +122,22 @@ function createAllUpgrades(): UpgradeOption[] {
       }
     },
     
-    // Ball type unlocks
+    // Ball additions (balls auto-upgrade, so we give normal balls)
     {
-      id: 'unlock_fire',
-      name: 'Unlock Fire Ball',
-      description: 'Gain 1 Fire Ball (burn DoT + piercing)',
-      icon: '🔥',
-      rarity: 'uncommon',
+      id: 'add_5_balls',
+      name: '+5 Normal Balls',
+      description: 'Add 5 Normal Balls (auto-upgrade ready!)',
+      icon: '🔵',
+      rarity: 'common',
       category: 'ball',
       apply: (game: any) => {
-        game.player.inventory.fire += 1;
+        game.player.inventory.normal += 5;
       }
     },
     {
-      id: 'unlock_ice',
-      name: 'Unlock Ice Ball',
-      description: 'Gain 1 Ice Ball (slow + AoE freeze)',
-      icon: '❄️',
-      rarity: 'uncommon',
-      category: 'ball',
-      apply: (game: any) => {
-        game.player.inventory.ice += 1;
-      }
-    },
-    {
-      id: 'unlock_lightning',
-      name: 'Unlock Lightning Ball',
-      description: 'Gain 1 Lightning Ball (chain lightning)',
+      id: 'add_lightning',
+      name: '+1 Lightning Ball',
+      description: 'Gain 1 Lightning Ball directly',
       icon: '⚡',
       rarity: 'uncommon',
       category: 'ball',
@@ -157,71 +146,49 @@ function createAllUpgrades(): UpgradeOption[] {
       }
     },
     {
-      id: 'unlock_poison',
-      name: 'Unlock Poison Ball',
-      description: 'Gain 1 Poison Ball (DoT + contagion)',
-      icon: '☠️',
-      rarity: 'uncommon',
-      category: 'ball',
-      apply: (game: any) => {
-        game.player.inventory.poison += 1;
-      }
-    },
-    {
-      id: 'unlock_bomb',
-      name: 'Unlock Bomb Ball',
-      description: 'Gain 1 Bomb Ball (AoE explosion)',
-      icon: '💣',
-      rarity: 'rare',
-      category: 'ball',
-      apply: (game: any) => {
-        game.player.inventory.bomb += 1;
-      }
-    },
-    {
-      id: 'unlock_ghost',
-      name: 'Unlock Ghost Ball',
-      description: 'Gain 1 Ghost Ball (phases through enemies)',
+      id: 'add_ghost',
+      name: '+1 Ghost Ball',
+      description: 'Gain 1 Ghost Ball (top tier!)',
       icon: '👻',
-      rarity: 'epic',
+      rarity: 'rare',
       category: 'ball',
       apply: (game: any) => {
         game.player.inventory.ghost += 1;
       }
     },
+    {
+      id: 'add_bomb',
+      name: '+1 Bomb Ball',
+      description: 'Gain 1 Bomb Ball (explosive special)',
+      icon: '💣',
+      rarity: 'epic',
+      category: 'ball',
+      apply: (game: any) => {
+        game.player.inventory.bomb += 1;
+      }
+    },
     
     // Ball enhancements
     {
-      id: 'piercing',
-      name: 'Piercing Shot',
-      description: 'Balls pierce through 1 extra enemy',
-      icon: '➡️',
+      id: 'ball_damage',
+      name: '+50% Ball Damage',
+      description: 'All balls deal 50% more damage',
+      icon: '💪',
       rarity: 'uncommon',
       category: 'ball',
       apply: (game: any) => {
-        game.piercingCount = (game.piercingCount || 0) + 1;
+        game.player.damageMultiplier = (game.player.damageMultiplier || 1) * 1.5;
       }
     },
     {
-      id: 'bounce_boost',
-      name: 'Bounce Boost',
-      description: '+2 bounces before ball returns',
-      icon: '🏀',
+      id: 'ball_size',
+      name: 'Bigger Balls',
+      description: 'Balls are 25% larger (easier to hit)',
+      icon: '🔵',
       rarity: 'common',
       category: 'ball',
       apply: (game: any) => {
-        game.bonusBounces = (game.bonusBounces || 0) + 2;
-      }
-    },
-    {
-      id: 'explosive_impact',
-      name: 'Explosive Impact',
-      description: '15% chance for AoE explosion on hit',
-      icon: '💥',
-      rarity: 'rare',
-      category: 'ball',
-      apply: (game: any) => {
-        game.explosiveChance = (game.explosiveChance || 0) + 0.15;
+        game.ballSizeMultiplier = (game.ballSizeMultiplier || 1) * 1.25;
       }
     },
     

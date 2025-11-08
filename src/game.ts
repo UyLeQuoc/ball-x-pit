@@ -190,29 +190,21 @@ export class Game {
     // Update player
     updatePlayer(this.player, this.input, deltaTime);
     
-    // Update balls
-    this.balls = updateBalls(this.balls, this.player.position, deltaTime, this.particles);
-    
-    // Collect balls that reached bottom (inactive balls)
-    const inactiveBalls = this.balls.filter(b => !b.active && !b.held);
-    if (inactiveBalls.length > 0) {
-      // Count each ball type
-      const ballTypeCounts: Record<string, number> = {};
-      inactiveBalls.forEach(ball => {
-        ballTypeCounts[ball.type] = (ballTypeCounts[ball.type] || 0) + 1;
-      });
-      
-      // Add all to inventory
-      Object.entries(ballTypeCounts).forEach(([type, count]) => {
-        addBallToInventory(this.player, type, count);
-      });
-      
-      // Remove collected balls from array
-      this.balls = this.balls.filter(b => b.active || b.held);
-      
-      // Auto-upgrade after collecting balls
-      this.autoUpgradeBalls();
-    }
+        // Update balls
+        this.balls = updateBalls(this.balls, this.player.position, deltaTime, this.particles);
+        
+        // Collect normal balls that reached bottom (inactive balls)
+        const inactiveBalls = this.balls.filter(b => !b.active && !b.held && b.type === 'normal');
+        if (inactiveBalls.length > 0) {
+          // Return normal balls to inventory
+          addBallToInventory(this.player, 'normal', inactiveBalls.length);
+          
+          // Remove collected balls from array
+          this.balls = this.balls.filter(b => b.active || b.held);
+          
+          // Auto-upgrade after collecting balls
+          this.autoUpgradeBalls();
+        }
     
     // Handle ball throwing
     this.handleBallThrowing();
