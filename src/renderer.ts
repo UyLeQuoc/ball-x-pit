@@ -172,6 +172,54 @@ export class Renderer {
   drawPlayer(pos: Vector2, flashing: boolean = false): void {
     if (flashing && Math.floor(Date.now() / 100) % 2 === 0) return;
     
+    // Player glow effect (cyan/blue)
+    this.ctx.save();
+    const glowSize = PLAYER_WIDTH / 2 + 15;
+    const glowGradient = this.ctx.createRadialGradient(
+      pos.x, pos.y, 0,
+      pos.x, pos.y, glowSize
+    );
+    glowGradient.addColorStop(0, 'rgba(74, 255, 255, 0.4)');
+    glowGradient.addColorStop(0.5, 'rgba(74, 158, 255, 0.2)');
+    glowGradient.addColorStop(1, 'rgba(74, 158, 255, 0)');
+    this.ctx.fillStyle = glowGradient;
+    this.ctx.beginPath();
+    this.ctx.arc(pos.x, pos.y, glowSize, 0, Math.PI * 2);
+    this.ctx.fill();
+    this.ctx.restore();
+    
+    // Draw shield/paddle above player
+    const paddleWidth = PLAYER_WIDTH + 20;
+    const paddleHeight = 8;
+    const paddleY = pos.y - PLAYER_HEIGHT / 2 - 15;
+    
+    // Paddle glow
+    this.ctx.save();
+    this.ctx.shadowBlur = 15;
+    this.ctx.shadowColor = '#00ffff';
+    
+    // Main paddle
+    const paddleGradient = this.ctx.createLinearGradient(
+      pos.x - paddleWidth / 2, paddleY,
+      pos.x + paddleWidth / 2, paddleY
+    );
+    paddleGradient.addColorStop(0, '#4A9EFF');
+    paddleGradient.addColorStop(0.5, '#4AFFFF');
+    paddleGradient.addColorStop(1, '#4A9EFF');
+    this.ctx.fillStyle = paddleGradient;
+    
+    // Rounded paddle
+    this.ctx.beginPath();
+    this.ctx.roundRect(
+      pos.x - paddleWidth / 2,
+      paddleY,
+      paddleWidth,
+      paddleHeight,
+      4
+    );
+    this.ctx.fill();
+    this.ctx.restore();
+    
     // Use sprite if loaded, otherwise fallback to simple shapes
     if (this.spritesLoaded) {
       const sprite = getSprite('player');
@@ -202,19 +250,21 @@ export class Renderer {
   drawBall(ball: BallData, color: string): void {
     if (!ball.active) return;
     
-    // Glow effect
+    // Enhanced blue glow effect for player balls
+    this.ctx.save();
+    const glowRadius = BALL_RADIUS * 3;
     const gradient = this.ctx.createRadialGradient(
       ball.position.x, ball.position.y, 0,
-      ball.position.x, ball.position.y, BALL_RADIUS * 2
+      ball.position.x, ball.position.y, glowRadius
     );
-    gradient.addColorStop(0, color);
-    gradient.addColorStop(0.5, color + '80');
-    gradient.addColorStop(1, color + '00');
-    
+    gradient.addColorStop(0, 'rgba(74, 158, 255, 0.6)');
+    gradient.addColorStop(0.4, 'rgba(74, 158, 255, 0.3)');
+    gradient.addColorStop(1, 'rgba(74, 158, 255, 0)');
     this.ctx.fillStyle = gradient;
     this.ctx.beginPath();
-    this.ctx.arc(ball.position.x, ball.position.y, BALL_RADIUS * 2, 0, Math.PI * 2);
+    this.ctx.arc(ball.position.x, ball.position.y, glowRadius, 0, Math.PI * 2);
     this.ctx.fill();
+    this.ctx.restore();
     
     // Core
     this.drawCircle(ball.position, BALL_RADIUS, color);
@@ -339,10 +389,20 @@ export class Renderer {
       y: powerUp.position.y + floatOffset
     };
     
-    // Outer glow (pulsing)
+    // Purple outer glow (pulsing) for power-ups
     this.ctx.save();
-    this.ctx.globalAlpha = 0.4 + Math.sin(Date.now() / 200) * 0.2;
-    this.drawCircle(pos, size / 2 + 8, color);
+    const pulseAlpha = 0.5 + Math.sin(Date.now() / 200) * 0.3;
+    const glowGradient = this.ctx.createRadialGradient(
+      pos.x, pos.y, 0,
+      pos.x, pos.y, size / 2 + 12
+    );
+    glowGradient.addColorStop(0, `rgba(201, 74, 255, ${pulseAlpha})`);
+    glowGradient.addColorStop(0.6, `rgba(201, 74, 255, ${pulseAlpha * 0.5})`);
+    glowGradient.addColorStop(1, 'rgba(201, 74, 255, 0)');
+    this.ctx.fillStyle = glowGradient;
+    this.ctx.beginPath();
+    this.ctx.arc(pos.x, pos.y, size / 2 + 12, 0, Math.PI * 2);
+    this.ctx.fill();
     this.ctx.restore();
     
     // Main circle
@@ -388,16 +448,16 @@ export class Renderer {
   }
   
   drawProjectile(projectile: Projectile): void {
-    // Glow effect to make projectiles more visible
+    // RED glow effect for enemy projectiles (more visible and dangerous)
     this.ctx.save();
-    const glowRadius = 15;
+    const glowRadius = 20;
     const gradient = this.ctx.createRadialGradient(
       projectile.position.x, projectile.position.y, 0,
       projectile.position.x, projectile.position.y, glowRadius
     );
-    gradient.addColorStop(0, 'rgba(255, 255, 100, 0.6)');
-    gradient.addColorStop(0.5, 'rgba(255, 200, 0, 0.3)');
-    gradient.addColorStop(1, 'rgba(255, 200, 0, 0)');
+    gradient.addColorStop(0, 'rgba(255, 74, 74, 0.8)');
+    gradient.addColorStop(0.5, 'rgba(255, 74, 74, 0.4)');
+    gradient.addColorStop(1, 'rgba(255, 74, 74, 0)');
     this.ctx.fillStyle = gradient;
     this.ctx.beginPath();
     this.ctx.arc(projectile.position.x, projectile.position.y, glowRadius, 0, Math.PI * 2);

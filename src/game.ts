@@ -40,6 +40,8 @@ import {
 } from './constants';
 import { distance, generateId, randomInt, randomChoice, getColumnFromX, randomRange, getXFromColumn } from './utils';
 
+const MAX_BALLS_ON_FIELD = 5; // Limit active balls in play
+
 export class Game {
   private canvas: HTMLCanvasElement;
   private renderer: Renderer;
@@ -61,6 +63,10 @@ export class Game {
   
   // Boss
   boss: Boss | null = null;
+  private bossWarningShown: boolean = false;
+  private bossWarningTimer: number = 0;
+  private bossDefeatMessage: string = '';
+  private bossDefeatMessageTimer: number = 0;
   
   // Progress
   progress: GameProgress = {
@@ -167,24 +173,45 @@ export class Game {
   }
   
   private updatePlaying(deltaTime: number): void {
+    // Update warning and message timers
+    if (this.bossWarningTimer > 0) {
+      this.bossWarningTimer -= deltaTime;
+    }
+    if (this.bossDefeatMessageTimer > 0) {
+      this.bossDefeatMessageTimer -= deltaTime;
+    }
+    if (this.upgradeNotification && this.upgradeNotification.timer > 0) {
+      this.upgradeNotification.timer -= deltaTime;
+      if (this.upgradeNotification.timer <= 0) {
+        this.upgradeNotification = null;
+      }
+    }
+    
     // Update player
     updatePlayer(this.player, this.input, deltaTime);
     
-    // Update balls and check for caught balls
-    const ballsBefore = this.balls.filter(b => !b.held).length;
+    // Update balls
     this.balls = updateBalls(this.balls, this.player.position, deltaTime, this.particles);
-    const ballsAfter = this.balls.filter(b => !b.held).length;
     
-    // If a ball was caught, add it back to inventory
-    if (ballsAfter < ballsBefore) {
-      const caughtBall = this.balls.find(b => b.held && !b.active);
-      if (!caughtBall) {
-        // Find the newly held ball
-        const newlyHeldBall = this.balls.find(b => b.held);
-        if (newlyHeldBall) {
-          addBallToInventory(this.player, newlyHeldBall.type, 1);
-        }
-      }
+    // Collect balls that reached bottom (inactive balls)
+    const inactiveBalls = this.balls.filter(b => !b.active && !b.held);
+    if (inactiveBalls.length > 0) {
+      // Count each ball type
+      const ballTypeCounts: Record<string, number> = {};
+      inactiveBalls.forEach(ball => {
+        ballTypeCounts[ball.type] = (ballTypeCounts[ball.type] || 0) + 1;
+      });
+      
+      // Add all to inventory
+      Object.entries(ballTypeCounts).forEach(([type, count]) => {
+        addBallToInventory(this.player, type, count);
+      });
+      
+      // Remove collected balls from array
+      this.balls = this.balls.filter(b => b.active || b.held);
+      
+      // Auto-upgrade after collecting balls
+      this.autoUpgradeBalls();
     }
     
     // Handle ball throwing
@@ -245,6 +272,14 @@ export class Game {
       
       // Check for throw input
       if (this.input.mouse.pressed) {
+        // Check active balls limit (not including held ball)
+        const activeBalls = this.balls.filter(b => b.active && !b.held).length;
+        if (activeBalls >= MAX_BALLS_ON_FIELD) {
+          // Don't throw if limit reached
+          clearMousePress(this.input);
+          return;
+        }
+        
         const mousePos = getMousePosition(this.input);
         const direction = {
           x: mousePos.x - heldBall.position.x,
@@ -257,17 +292,19 @@ export class Game {
         // Remove ball from inventory
         removeBallFromInventory(this.player, heldBall.type);
         
-        // Auto-select next available ball type and create it immediately
-        selectNextAvailableBall(this.player);
-        const nextBallType = this.player.selectedBallType;
+        // Auto-upgrade balls if possible
+        this.autoUpgradeBalls();
         
-        if (this.player.inventory[nextBallType as keyof typeof this.player.inventory] > 0) {
+        // Auto-select BEST available ball type (highest tier)
+        const bestBallType = this.selectBestBallType();
+        
+        if (this.player.inventory[bestBallType as keyof typeof this.player.inventory] > 0) {
           // Create next ball immediately with small delay
           setTimeout(() => {
             const newBall = createBall(
               { x: this.player.position.x, y: this.player.position.y - 20 },
               { x: 0, y: -1 },
-              nextBallType
+              bestBallType
             );
             newBall.held = true;
             this.balls.push(newBall);
@@ -276,12 +313,12 @@ export class Game {
       }
     } else {
       // No ball held - auto-create one if available
-      selectNextAvailableBall(this.player);
-      if (this.player.inventory[this.player.selectedBallType as keyof typeof this.player.inventory] > 0) {
+      const bestBallType = this.selectBestBallType();
+      if (this.player.inventory[bestBallType as keyof typeof this.player.inventory] > 0) {
         const newBall = createBall(
           { x: this.player.position.x, y: this.player.position.y - 20 },
           { x: 0, y: -1 },
-          this.player.selectedBallType
+          bestBallType
         );
         newBall.held = true;
         this.balls.push(newBall);
@@ -627,6 +664,12 @@ export class Game {
       }
     }
     
+    // Show warning at 90% progress
+    if (this.progress.progress >= 90 && !this.bossWarningShown && !this.progress.bossActive) {
+      this.bossWarningShown = true;
+      this.bossWarningTimer = 5; // Show for 5 seconds
+    }
+    
     // Check for boss spawn at exactly 100%
     if (this.progress.progress >= 100 && !this.progress.bossActive && !this.boss) {
       this.progress.progress = 100; // Cap at 100
@@ -662,10 +705,28 @@ export class Game {
   
   private spawnBoss(): void {
     this.progress.bossActive = true;
+    this.bossWarningTimer = 0; // Hide warning
     
     // Randomly select boss type
     const bossTypes: BossType[] = ['archer_king', 'brawler_chief', 'dark_mage'];
     const selectedType = randomChoice(bossTypes);
+    
+    // Show boss appearance message
+    let bossName = '';
+    switch (selectedType) {
+      case 'archer_king':
+        bossName = 'The Archer King';
+        break;
+      case 'brawler_chief':
+        bossName = 'The Brawler Chief';
+        break;
+      case 'dark_mage':
+        bossName = 'The Dark Mage';
+        break;
+    }
+    
+    // Flash effect for boss spawn
+    this.flashAlpha = 0.8;
     
     switch (selectedType) {
       case 'archer_king':
@@ -1230,6 +1291,10 @@ export class Game {
   private handleBossDefeat(): void {
     if (!this.boss) return;
     
+    // Show victory message
+    this.bossDefeatMessage = `${this.boss.name} DEFEATED!`;
+    this.bossDefeatMessageTimer = 4; // Show for 4 seconds
+    
     // Create explosion effects
     this.particles.push(...createExplosionParticles(this.boss.position, '#FFD700', 50));
     this.flashAlpha = 0.6;
@@ -1262,6 +1327,7 @@ export class Game {
     setTimeout(() => {
       this.progress.progress = 0;
       this.progress.bossActive = false;
+      this.bossWarningShown = false; // Reset for next boss
       this.lastSpawnProgress = 0;
       this.boss = null;
       this.progress.section++;
@@ -1300,6 +1366,18 @@ export class Game {
         renderHUD(this.renderer, this.player, this.progress, this.gameTime);
         if (this.boss && !this.boss.defeated) {
           renderBossHealthBar(this.renderer, this.boss);
+        }
+        // Render boss warning
+        if (this.bossWarningTimer > 0) {
+          this.renderBossWarning();
+        }
+        // Render boss defeat message
+        if (this.bossDefeatMessageTimer > 0) {
+          this.renderBossDefeatMessage();
+        }
+        // Render upgrade notification
+        if (this.upgradeNotification && this.upgradeNotification.timer > 0) {
+          this.renderUpgradeNotification();
         }
         break;
       
@@ -1461,6 +1539,235 @@ export class Game {
       24
     );
     this.renderer.restoreContext();
+  }
+  
+  private renderBossWarning(): void {
+    // Flashing red overlay
+    const flashAlpha = (Math.sin(Date.now() / 200) * 0.3 + 0.3) * (this.bossWarningTimer / 5);
+    this.renderer.drawRect(
+      { x: 0, y: 0, width: GAME_WIDTH, height: GAME_HEIGHT },
+      '#ff0000',
+      flashAlpha * 0.15
+    );
+    
+    // Warning panel
+    const panelWidth = 500;
+    const panelHeight = 150;
+    const panelX = (GAME_WIDTH - panelWidth) / 2;
+    const panelY = GAME_HEIGHT / 2 - panelHeight / 2;
+    
+    // Panel background
+    this.renderer.drawRect(
+      { x: panelX, y: panelY, width: panelWidth, height: panelHeight },
+      '#1a0000',
+      0.9
+    );
+    
+    // Panel border with red glow
+    this.renderer.drawRectStrokeWithGlow(
+      { x: panelX, y: panelY, width: panelWidth, height: panelHeight },
+      '#ff0000',
+      3,
+      20
+    );
+    
+    // Warning icon and text
+    const pulse = Math.sin(Date.now() / 200) * 0.3 + 0.7;
+    this.renderer.saveContext();
+    this.renderer.setGlobalAlpha(pulse);
+    
+    this.renderer.drawTextWithOutline(
+      '⚠️ WARNING ⚠️',
+      { x: GAME_WIDTH / 2, y: panelY + 50 },
+      '#ff4a4a',
+      '#000000',
+      28
+    );
+    
+    this.renderer.restoreContext();
+    
+    this.renderer.drawTextWithOutline(
+      'BOSS APPROACHING',
+      { x: GAME_WIDTH / 2, y: panelY + 95 },
+      '#ffff4a',
+      '#000000',
+      18
+    );
+    
+    // Progress indicator
+    const progressText = `${Math.floor(this.progress.progress)}%`;
+    this.renderer.drawTextWithOutline(
+      progressText,
+      { x: GAME_WIDTH / 2, y: panelY + 125 },
+      '#ffffff',
+      '#000000',
+      14
+    );
+  }
+  
+  private renderBossDefeatMessage(): void {
+    // Golden celebration overlay
+    const fadeAlpha = Math.min(1, this.bossDefeatMessageTimer / 1);
+    this.renderer.drawRect(
+      { x: 0, y: 0, width: GAME_WIDTH, height: GAME_HEIGHT },
+      '#ffd700',
+      fadeAlpha * 0.1
+    );
+    
+    // Victory panel
+    const panelWidth = 550;
+    const panelHeight = 180;
+    const panelX = (GAME_WIDTH - panelWidth) / 2;
+    const panelY = GAME_HEIGHT / 2 - panelHeight / 2;
+    
+    // Panel background
+    this.renderer.drawRect(
+      { x: panelX, y: panelY, width: panelWidth, height: panelHeight },
+      '#1a1a0a',
+      0.95
+    );
+    
+    // Panel border with golden glow
+    this.renderer.drawRectStrokeWithGlow(
+      { x: panelX, y: panelY, width: panelWidth, height: panelHeight },
+      '#ffd700',
+      4,
+      25
+    );
+    
+    // Victory text with animation
+    const bounce = Math.abs(Math.sin(Date.now() / 150)) * 5;
+    this.renderer.drawTextWithOutline(
+      '🎉 VICTORY! 🎉',
+      { x: GAME_WIDTH / 2, y: panelY + 50 - bounce },
+      '#ffd700',
+      '#000000',
+      32
+    );
+    
+    // Boss name defeated
+    this.renderer.drawTextWithOutline(
+      this.bossDefeatMessage,
+      { x: GAME_WIDTH / 2, y: panelY + 100 },
+      '#ffffff',
+      '#000000',
+      20
+    );
+    
+    // Rewards text
+    const sparkle = Math.sin(Date.now() / 100) * 0.3 + 0.7;
+    this.renderer.saveContext();
+    this.renderer.setGlobalAlpha(sparkle);
+    this.renderer.drawTextWithOutline(
+      '+ Rewards Dropped +',
+      { x: GAME_WIDTH / 2, y: panelY + 140 },
+      '#4aff4a',
+      '#000000',
+      14
+    );
+    this.renderer.restoreContext();
+  }
+  
+  private renderUpgradeNotification(): void {
+    if (!this.upgradeNotification) return;
+    
+    // Notification at top center
+    const panelWidth = 400;
+    const panelHeight = 80;
+    const panelX = (GAME_WIDTH - panelWidth) / 2;
+    const panelY = HUD_HEIGHT + 60;
+    
+    // Fade in/out effect
+    const fadeAlpha = Math.min(1, this.upgradeNotification.timer < 0.5 ? this.upgradeNotification.timer * 2 : 1);
+    
+    // Panel background
+    this.renderer.saveContext();
+    this.renderer.setGlobalAlpha(fadeAlpha);
+    this.renderer.drawRect(
+      { x: panelX, y: panelY, width: panelWidth, height: panelHeight },
+      '#1a1a0a',
+      0.95
+    );
+    
+    // Panel border with golden glow
+    this.renderer.drawRectStrokeWithGlow(
+      { x: panelX, y: panelY, width: panelWidth, height: panelHeight },
+      '#FFD700',
+      3,
+      15
+    );
+    
+    // Upgrade message
+    const bounce = Math.sin(Date.now() / 150) * 3;
+    this.renderer.drawTextWithOutline(
+      this.upgradeNotification.message,
+      { x: GAME_WIDTH / 2, y: panelY + panelHeight / 2 - bounce },
+      '#FFD700',
+      '#000000',
+      18
+    );
+    
+    this.renderer.restoreContext();
+  }
+  
+  // Auto-upgrade balls system
+  private autoUpgradeBalls(): void {
+    const inv = this.player.inventory;
+    
+    // Upgrade rules: 5 of same type = 1 of next tier
+    // Tier progression: normal -> lightning -> ghost
+    // Bomb is special and not in upgrade chain
+    
+    let upgraded = false;
+    let upgradeMessage = '';
+    
+    // 5 normal -> 1 lightning
+    if (inv.normal >= 5) {
+      const upgrades = Math.floor(inv.normal / 5);
+      inv.normal -= upgrades * 5;
+      inv.lightning += upgrades;
+      upgraded = true;
+      upgradeMessage = `⚡ Upgraded to ${upgrades} Lightning Ball${upgrades > 1 ? 's' : ''}!`;
+    }
+    
+    // 5 lightning -> 1 ghost
+    if (inv.lightning >= 5) {
+      const upgrades = Math.floor(inv.lightning / 5);
+      inv.lightning -= upgrades * 5;
+      inv.ghost += upgrades;
+      upgraded = true;
+      upgradeMessage = `👻 Upgraded to ${upgrades} Ghost Ball${upgrades > 1 ? 's' : ''}!`;
+    }
+    
+    // Show upgrade notification
+    if (upgraded) {
+      this.showUpgradeNotification(upgradeMessage);
+    }
+  }
+  
+  // Upgrade notification system
+  private upgradeNotification: { message: string; timer: number } | null = null;
+  
+  private showUpgradeNotification(message: string): void {
+    this.upgradeNotification = {
+      message,
+      timer: 3 // Show for 3 seconds
+    };
+  }
+  
+  // Select best (highest tier) available ball type
+  private selectBestBallType(): string {
+    const inv = this.player.inventory;
+    
+    // Check from highest to lowest tier (bomb is special, highest priority)
+    // Priority: bomb > ghost > lightning > normal
+    if (inv.bomb && inv.bomb > 0) return 'bomb';
+    if (inv.ghost && inv.ghost > 0) return 'ghost';
+    if (inv.lightning && inv.lightning > 0) return 'lightning';
+    if (inv.normal && inv.normal > 0) return 'normal';
+    
+    // Fallback - if no balls, return normal but don't create one
+    return 'normal';
   }
 }
 

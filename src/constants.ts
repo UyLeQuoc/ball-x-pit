@@ -18,6 +18,7 @@ export const PLAYER_START_HP = 100;
 export const BALL_RADIUS = 8;
 export const BALL_BASE_SPEED = 300;
 export const BALL_BASE_DAMAGE = 10;
+export const MAX_BALLS_ON_FIELD = 5; // Limit active balls in play
 export const MAX_BALLS_ACTIVE = 10;
 
 // Enemy constants
@@ -106,56 +107,28 @@ export const BALL_STATS = {
     color: COLORS.normal,
     icon: '🔵'
   },
-  fire: {
-    damage: 15,
-    speed: 1.0,
-    color: COLORS.fire,
-    icon: '🔴',
-    burnDamage: 5,
-    burnDuration: 3,
-    piercing: 2
-  },
-  ice: {
-    damage: 12,
-    speed: 1.0,
-    color: COLORS.ice,
-    icon: '❄️',
-    slowAmount: 0.5,
-    slowDuration: 2,
-    aoeRadius: 30
-  },
   lightning: {
-    damage: 8,
-    speed: 1.3,
+    damage: 20,
+    speed: 1.2,
     color: COLORS.lightning,
     icon: '⚡',
     chainCount: 3,
-    chainDamageMultiplier: 0.5
-  },
-  bomb: {
-    damage: 25,
-    speed: 1.0,
-    color: COLORS.bomb,
-    icon: '💣',
-    explosionRadius: 100,
-    oneTimeUse: true
-  },
-  poison: {
-    damage: 8,
-    speed: 1.0,
-    color: COLORS.poison,
-    icon: '☠️',
-    poisonDamage: 3,
-    poisonDuration: 5,
-    contagious: true
+    chainRange: 100
   },
   ghost: {
-    damage: 10,
-    speed: 1.0,
+    damage: 35,
+    speed: 1.4,
     color: COLORS.ghost,
     icon: '👻',
-    phasing: true,
-    maxHits: 8
+    phaseThrough: true,
+    piercing: 5
+  },
+  bomb: {
+    damage: 50,
+    speed: 0.8,
+    color: COLORS.bomb,
+    icon: '💣',
+    explosionRadius: 100
   }
 };
 

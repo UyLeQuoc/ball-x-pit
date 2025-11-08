@@ -78,27 +78,32 @@ export function updateBalls(
       ball.velocity.y = Math.abs(ball.velocity.y);
     }
     
-    // Check player collision (catch ball) - only if moving downward
+    // Check player collision (shield paddle) - bounce ball upward
     if (ball.velocity.y > 0) {
-      const playerRect = {
-        x: playerPos.x - PLAYER_WIDTH / 2,
-        y: playerPos.y - PLAYER_HEIGHT / 2,
-        width: PLAYER_WIDTH,
-        height: PLAYER_HEIGHT
+      // Shield/paddle is slightly above player center
+      const paddleRect = {
+        x: playerPos.x - PLAYER_WIDTH / 2 - 10, // Wider than player
+        y: playerPos.y - PLAYER_HEIGHT / 2 - 15, // Above player
+        width: PLAYER_WIDTH + 20,
+        height: 8 // Thin paddle
       };
       
-      if (circleRectCollision(ball.position, BALL_RADIUS, playerRect)) {
-        ball.held = true;
-        ball.velocity = { x: 0, y: 0 };
-        ball.position = { x: playerPos.x, y: playerPos.y - PLAYER_HEIGHT };
+      if (circleRectCollision(ball.position, BALL_RADIUS, paddleRect)) {
+        // Bounce ball upward with angle based on hit position
+        const hitOffset = (ball.position.x - playerPos.x) / (PLAYER_WIDTH / 2);
+        ball.velocity.x = hitOffset * ball.speed * 0.5;
+        ball.velocity.y = -Math.abs(ball.velocity.y);
+        ball.position.y = paddleRect.y - BALL_RADIUS;
         return true;
       }
     }
     
-    // Bounce off bottom instead of removing
+    // Ball reaches bottom - return to inventory (marked for collection)
     if (ball.position.y + BALL_RADIUS >= GAME_HEIGHT - 80) {
-      ball.position.y = GAME_HEIGHT - 80 - BALL_RADIUS;
-      ball.velocity.y = -Math.abs(ball.velocity.y);
+      // Mark ball as returning to inventory
+      ball.velocity = { x: 0, y: 0 };
+      ball.active = false; // Will be collected by game logic
+      return true; // Keep in array temporarily for collection
     }
     
     // Only remove if way out of bounds
@@ -147,8 +152,8 @@ export function checkBallEnemyCollisions(
         const stats = BALL_STATS[ball.type];
         particles.push(...createImpactParticles(ball.position, stats.color, 10));
         
-        // Bounce ball off enemy
-        if (ball.type !== 'ghost' && !(ball.type === 'fire' && hits.filter(h => h.ballType === 'fire').length < 2)) {
+        // Bounce ball off enemy (ghost and lightning phase through)
+        if (ball.type !== 'ghost' && ball.type !== 'lightning') {
           const dx = ball.position.x - enemy.position.x;
           const dy = ball.position.y - enemy.position.y;
           const normal = normalize({ x: dx, y: dy });

@@ -1,6 +1,7 @@
 // Power-up system
 
-import type { PowerUp, Vector2, Player } from './types';
+import type { PowerUp, Vector2 } from './types';
+import type { Player } from './player';
 import { generateId, randomChoice, distance } from './utils';
 import { POWERUP_SIZE, POWERUP_FALL_SPEED, POWERUP_LIFETIME, POWERUP_DURATIONS } from './constants';
 import { healPlayer, addBuff } from './player';

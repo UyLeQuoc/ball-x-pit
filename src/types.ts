@@ -12,7 +12,7 @@ export interface Rectangle {
   height: number;
 }
 
-export type BallType = 'normal' | 'fire' | 'ice' | 'lightning' | 'bomb' | 'poison' | 'ghost';
+export type BallType = 'normal' | 'lightning' | 'ghost' | 'bomb';
 
 export type EnemyType = 'melee' | 'archer' | 'tank' | 'elite' | 'spawner';
 
@@ -55,12 +55,9 @@ export interface BallData {
 export interface BallInventory {
   [key: string]: number;
   normal: number;
-  fire: number;
-  ice: number;
   lightning: number;
-  bomb: number;
-  poison: number;
   ghost: number;
+  bomb: number; // Special ball, not in upgrade chain
 }
 
 export interface Enemy {

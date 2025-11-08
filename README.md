@@ -5,21 +5,23 @@ A 2D roguelite brick breaker game with RPG progression elements, inspired by Bal
 ## 🎯 Game Features
 
 ### Core Mechanics
-- **Ball Physics**: Realistic bouncing mechanics with trajectory prediction
+- **Shield Paddle**: Bounce balls with your paddle to keep them in play
+- **Auto-Return System**: Balls automatically return to inventory when they hit bottom
 - **8-Column Grid System**: Strategic enemy placement and movement patterns
-- **Multiple Ball Types**: 7 unique ball types with special effects
+- **Ball Upgrade System**: Collect 5 balls to automatically upgrade to next tier
 - **Enemy Variety**: 5 different enemy types with unique behaviors
-- **Boss Battles**: Epic multi-phase boss encounters
+- **Boss Battles**: Epic multi-phase boss encounters with unique attack patterns
 - **XP & Leveling**: RPG-style progression with upgrade choices
 
-### Ball Types
-- 🔵 **Normal Ball**: Standard damage and bounce
-- 🔥 **Fire Ball**: Burn DoT + piercing (2 enemies)
-- ❄️ **Ice Ball**: Slows enemies + AoE freeze
-- ⚡ **Lightning Ball**: Chain lightning to 3 nearby enemies
-- 💣 **Bomb Ball**: Massive AoE explosion (one-time use)
-- ☠️ **Poison Ball**: DoT + contagious spread
-- 👻 **Ghost Ball**: Phases through enemies (hits up to 8)
+### Ball Types (Simplified System)
+
+**Upgrade Chain** (5 balls → 1 upgrade):
+- 🔵 **Normal Ball** (Tier 1): Damage: 10, Speed: 1.0x
+- ⚡ **Lightning Ball** (Tier 2): Damage: 20, Speed: 1.2x, chains to 3 enemies
+- 👻 **Ghost Ball** (Tier 3): Damage: 35, Speed: 1.4x, pierces 5 enemies, phases through
+
+**Special Ball**:
+- 💣 **Bomb Ball**: Damage: 50, Speed: 0.8x, 100px explosion radius (from power-ups only)
 
 ### Enemy Types
 - ⚔️ **Melee**: Fast-moving rushers
@@ -48,8 +50,9 @@ A 2D roguelite brick breaker game with RPG progression elements, inspired by Bal
 - Critical Hit Chance +10%
 - Life Steal
 
-**Ball Type Unlocks**:
-- Unlock Fire/Ice/Lightning/Poison/Bomb/Ghost Balls
+**Ball System**:
+- Balls auto-upgrade when you have 5 of same type
+- Bomb balls from power-ups (special, not in upgrade chain)
 
 **Utility**:
 - XP Magnet Range +50%
@@ -60,11 +63,10 @@ A 2D roguelite brick breaker game with RPG progression elements, inspired by Bal
 
 ## 🎮 Controls
 
-- **A/D** or **Arrow Keys**: Move left/right
-- **Mouse**: Aim trajectory
+- **WASD** or **Arrow Keys**: Move in 4 directions
+- **Mouse**: Aim and throw ball
 - **Left Click**: Throw ball
-- **ESC**: Pause game
-- **U**: Upgrade ball type (when available)
+- **ESC**: Pause/Resume game
 
 ## 🚀 Getting Started
 
@@ -130,21 +132,25 @@ brick-breaker/
 
 ## 📊 Game Progression
 
-1. **Start**: Level 1, 1 Normal Ball, 100 HP
-2. **Combat**: Throw balls to destroy descending enemies
-3. **Collect**: XP orbs and power-ups from defeated enemies
-4. **Level Up**: Choose from 3 random upgrades
-5. **Progress**: Reach 100% to face the boss
-6. **Boss**: Defeat multi-phase boss to complete stage
-7. **Repeat**: Continue with increasing difficulty
+1. **Start**: Level 1, 5 Normal Balls, 100 HP
+2. **Combat**: Bounce balls off your shield paddle to hit enemies
+3. **Auto-Return**: Balls return to inventory when reaching bottom
+4. **Auto-Upgrade**: 5 balls of same type automatically upgrade to next tier
+5. **Collect**: XP orbs and power-ups from defeated enemies
+6. **Level Up**: Choose from 3 random upgrades
+7. **Progress**: Reach 100% to face the boss
+8. **Boss Warning**: Warning appears at 90% progress
+9. **Boss Fight**: Defeat multi-phase boss with unique patterns
+10. **Victory**: Receive rewards and continue to next stage
 
 ## 🎯 Strategy Tips
 
-- **Ball Management**: Convert 5 Normal Balls → 1 Special Ball
-- **Trajectory Planning**: Use the dotted line to predict bounces
+- **Ball Upgrades**: 5 Normal → 1 Lightning → 5 Lightning → 1 Ghost
+- **Shield Control**: Position paddle to control ball angle
 - **Priority Targets**: Focus Spawners and Archers first
-- **Power-Up Timing**: Save powerful buffs for tough encounters
-- **Upgrade Synergy**: Combine damage boosts with ball type unlocks
+- **Power-Up Timing**: Save powerful buffs for boss fights
+- **Best Ball First**: System automatically uses your strongest balls
+- **Ball Limit**: Max 5 balls on field at once for better control
 
 ## 🔧 Configuration
 

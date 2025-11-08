@@ -43,13 +43,10 @@ export function createPlayer(): Player {
       invincibilityTimer: 0
     },
     inventory: {
-      normal: 3, // Start with 3 balls instead of 1
-      fire: 0,
-      ice: 0,
+      normal: 5, // Start with 5 balls (enough for first upgrade)
       lightning: 0,
-      bomb: 0,
-      poison: 0,
-      ghost: 0
+      ghost: 0,
+      bomb: 0 // Special bomb balls
     },
     selectedBallType: 'normal',
     buffs: [],
